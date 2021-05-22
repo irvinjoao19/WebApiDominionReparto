@@ -13,13 +13,14 @@ using System.Web.Http;
 
 namespace WebApiFenosa.Controllers
 {
+    [RoutePrefix("api/Migration")]
     public class MigrationController : ApiController
     {
         private static string path = ConfigurationManager.AppSettings["uploadFile"];
 
 
         [HttpGet]
-        [Route("api/Migration/GetLogin")]
+        [Route("GetLogin")]
         public IHttpActionResult GetLogin(string user, string password, string version, string imei, string token)
         {
             Login login = MigrationDA.GetOne(user, password, version, imei, token);
@@ -33,15 +34,21 @@ namespace WebApiFenosa.Controllers
         }
 
         [HttpGet]
-        [Route("api/Migration/MigracionAll")]
+        [Route("MigracionAll")]
         public IHttpActionResult MigracionAll(int operarioId, string version)
         {
             Migracion migracion = MigrationDA.GetMigracion(operarioId, version);
-            return Ok(migracion);
+            if (migracion != null)
+            {
+                return Ok(migracion);
+            }
+            else
+                return BadRequest("Actualizar Versión del App");
+
         }
 
         [HttpPost]
-        [Route("api/Migration/SaveOperarioGps")]
+        [Route("SaveOperarioGps")]
         public IHttpActionResult SaveOperarioGps(EstadoOperario estadoOperario)
         {
             Mensaje mensaje = MigrationDA.saveOperarioGps(estadoOperario);
@@ -49,7 +56,7 @@ namespace WebApiFenosa.Controllers
         }
 
         [HttpPost]
-        [Route("api/Migration/SaveGpsOperario")]
+        [Route("SaveGpsOperario")]
         public IHttpActionResult SaveGpsOperario(EstadoOperario estadoOperario)
         {
             Mensaje m = MigrationDA.SaveGpsOperario(estadoOperario);
@@ -59,7 +66,7 @@ namespace WebApiFenosa.Controllers
         }
 
         [HttpPost]
-        [Route("api/Migration/SaveEstadoMovil")]
+        [Route("SaveEstadoMovil")]
         public IHttpActionResult SaveEstadoMovil(EstadoMovil estadoMovil)
         {
             Mensaje mensaje = MigrationDA.saveEstadoMovil(estadoMovil);
@@ -67,7 +74,7 @@ namespace WebApiFenosa.Controllers
         }
 
         [HttpPost]
-        [Route("api/Migration/SaveNew")]
+        [Route("SaveNew")]
         public IHttpActionResult SaveRegistroMasivoNew()
         {
             try
@@ -78,7 +85,7 @@ namespace WebApiFenosa.Controllers
                 var json = HttpContext.Current.Request.Form["model"];
                 Registro p = JsonConvert.DeserializeObject<Registro>(json);
 
-                Mensaje mensaje = MigrationDA.saveRegistroRxNew(p);
+                Mensaje mensaje = MigrationDA.SaveRegistroRxNew(p);
 
                 if (mensaje != null)
                 {
@@ -102,29 +109,35 @@ namespace WebApiFenosa.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("SaveRegistro")]
+        public IHttpActionResult SaveRegistro(Registro p)
+        {
+            Mensaje m = MigrationDA.SaveRegistroRxNew(p);
+
+            if (m != null)
+            {
+                return Ok(m);
+            }
+            else return BadRequest("Error");
+        }
+
 
         [HttpPost]
-        [Route("api/Migration/Photos")]
+        [Route("SavePhoto")]
         public IHttpActionResult Photos()
         {
             try
             {
-                //string path = HttpContext.Current.Server.MapPath("~/Imagen/");
-                //string path = "C:/HostingSpaces/admincobraperu/www.cobraperu.com/wwwroot/Calidda/Content/foto/foto/";
                 var fotos = HttpContext.Current.Request.Files;
 
                 for (int i = 0; i < fotos.Count; i++)
                 {
                     string fileName = Path.GetFileName(fotos[i].FileName);
-                    //MigrationDA.SaveRegistroPhoto(fileName);
                     fotos[i].SaveAs(path + fileName);
                 }
-                Mensaje m = new Mensaje
-                {
-                    mensaje = "Enviado"
-                };
 
-                return Ok(m);
+                return Ok("ok");
             }
             catch (Exception ex)
             {
@@ -203,7 +216,7 @@ namespace WebApiFenosa.Controllers
         }
 
         [HttpPost]
-        [Route("api/Migration/SaveReparto")]
+        [Route("SaveReparto")]
         public IHttpActionResult SaveReparto()
         {
             try
